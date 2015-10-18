@@ -1,25 +1,87 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
+title: "Reproducible Research: Peer Assesment 1"
+author: "Mike Ceballos"
+output:
   html_document:
     keep_md: true
 ---
 
+This report shows how was Peer Assesment 1 executed. It contains an explanation of code required, as well as results obtained during running time.
 
-## Loading and preprocessing the data
-
-
+##Loading and preprocessing the data
+It is necessary to set work directory previous to load data.Then data will be loaded in "activity" variable:
+```{r}
+setwd("C:/Users/204024285/Documents/MisPrimerosProyectos/Reproducible Research")
+activity<-read.csv("activity.csv")
+```
+Next step is to review data structure and get a summary of current information. 
+```{r}
+str(activity)
+summary(activity)
+```
+At this point, it is able to make the analysis without further changes in current dataset.
 
 ## What is mean total number of steps taken per day?
+According with assignment, I calculated the total number of steps taken per day, using tapply function as follows:
+```{r}
+data_hist<-tapply(activity$steps, activity$date, sum)
+data_hist
+```
+Now, an histogram is created to review data distribution.
+```{r echo=FALSE, fig.height=4, results='asis'}
+hist(data_hist, main= paste("Histogram of Steps per day"))
+totalmean <- mean(data_hist, na.rm=TRUE)
+```
 
-
+Finally, the mean total of steps taken per day, without taking in consideration NA values, is: `r totalmean`.
 
 ## What is the average daily activity pattern?
 
+In order to solve this question, it is necessary to remove NA values and then calculate information asked by time interval. Finally, a time series plot is presented.
+```{r}
+data_interval<-na.omit(activity)
+dataplot <- tapply(data_interval$steps, data_interval$interval, mean)
+plot(as.vector(dataplot), x=names(dataplot), type="l")
+index<-which.max(as.vector(dataplot))
+time_interval<-names(dataplot[index])
+steps<-as.vector(dataplot[index])
+
+```
+
+The 5-minute interval with major steps were at `r time_interval` with `r steps` in average.
 
 
 ## Imputing missing values
 
+```{r, echo=FALSE}
+totalNA <- sum(is.na(activity$steps))
+```
+Now, I will review the amount of missing values on this dataset, evaluating the number of rows with NA values.
+The total of NAs values is `r totalNA`.
+
+A simple strategy will be used to cover all missing values, taking in count average of steps per day. Therefore, a new dataset will be created similar to original, but filling missing values with average steps. Finally, a histogram will be created to visualize data.
+```{r}
+data_fixed <- data_hist
+data_fixed[is.na(data_fixed)]<-mean(data_hist,na.rm=TRUE)
+hist(data_fixed, main= paste("Histogram of Steps per day"))
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+A new factor was created to split dataset in week days and weekends. Then, two plots were created to show data regarding time interval exercise.
+
+```{r}
+library(timeDate)
+isWeekday(as.Date(names(data_fixed)))
+data_interval$weekDay<-isWeekday(as.Date(data_interval$date))
+weekDayData<- subset(data_interval, data_interval$weekDay)
+weekEndData<- subset(data_interval, !data_interval$weekDay)
+dataplot1<-tapply(weekDayData$steps, weekDayData$interval, mean)
+dataplot2<-tapply(weekEndData$steps, weekEndData$interval, mean)
+plot(as.vector(dataplot1), x=names(dataplot1), type="l")
+plot(as.vector(dataplot2), x=names(dataplot2), type="l")
+```
+
+
+For any comments, please don't hesitate to contact me (Miguel Ceballos).
